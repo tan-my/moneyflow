@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Money Flow</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f2ffd4;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1 {
+      text-align: center;
+      font-family: 'Brush Script MT', cursive;
+      font-size: 3em;
+      margin: 20px 0;
+    }
+
+    .container {
+      flex: 1;
+      display: flex;
+      justify-content: space-around;
+      align-items: stretch;
+      text-align: center;
+      gap: 10px;
+    }
+
+    .box {
+      flex: 1;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.5s ease;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .savings { background-color: #d6ff9f; }
+    .investments { background-color: #baffc9; }
+    .transactions { background-color: #8effa0; }
+
+    .box h2 {
+      font-weight: bold;
+      letter-spacing: 2px;
+      font-size: 1.8em;
+      margin-bottom: 20px;
+    }
+
+    .box p {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+
+    .edit-btn, .delete-btn, .add-btn {
+      background: #333;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: 8px;
+      font-size: 0.9em;
+    }
+
+    .edit-btn:hover, .delete-btn:hover, .add-btn:hover {
+      background: #555;
+    }
+
+    input {
+      font-size: 1em;
+      margin: 0 3px;
+    }
+
+    .details {
+      max-height: 0;
+      opacity: 0;
+      transition: all 0.5s ease;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .box.expanded {
+      flex: 2;
+    }
+
+    .box.expanded .details {
+      max-height: 600px;
+      opacity: 1;
+    }
+
+    .add-btn {
+      display: none;
+      margin-top: 10px;
+    }
+
+    .box.expanded .add-btn {
+      display: inline-block;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+      .box.expanded {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Money Flow</h1>
+
+  <div class="container">
+    <!-- Savings -->
+    <div class="box savings" onclick="toggleExpand(this)">
+      <h2>SAVINGS</h2>
+      <p id="savingsTotal">Total savings: RM0</p>
+      <div class="details">
+        <p id="savingsDetail1">CIMB : RM500 
+          <button class="edit-btn" onclick="event.stopPropagation(); editValue('savingsDetail1','savingsTotal')">Edit</button>
+          <button class="delete-btn" onclick="event.stopPropagation(); deleteLine('savingsDetail1','savingsTotal')">Delete</button>
+        </p>
+        <p id="savingsDetail2">Maybank : RM500 
+          <button class="edit-btn" onclick="event.stopPropagation(); editValue('savingsDetail2','savingsTotal')">Edit</button>
+          <button class="delete-btn" onclick="event.stopPropagation(); deleteLine('savingsDetail2','savingsTotal')">Delete</button>
+        </p>
+      </div>
+      <button class="add-btn" onclick="event.stopPropagation(); addNewLine(this,'savingsTotal')">+ Add New</button>
+    </div>
+
+    <!-- Investments -->
+    <div class="box investments" onclick="toggleExpand(this)">
+      <h2>INVESTMENTS</h2>
+      <p id="investmentsTotal">Total investments: RM0</p>
+      <div class="details">
+        <p id="investDetail1">Stocks : RM600 
+          <button class="edit-btn" onclick="event.stopPropagation(); editValue('investDetail1','investmentsTotal')">Edit</button>
+          <button class="delete-btn" onclick="event.stopPropagation(); deleteLine('investDetail1','investmentsTotal')">Delete</button>
+        </p>
+        <p id="investDetail2">Crypto : RM400 
+          <button class="edit-btn" onclick="event.stopPropagation(); editValue('investDetail2','investmentsTotal')">Edit</button>
+          <button class="delete-btn" onclick="event.stopPropagation(); deleteLine('investDetail2','investmentsTotal')">Delete</button>
+        </p>
+      </div>
+      <button class="add-btn" onclick="event.stopPropagation(); addNewLine(this,'investmentsTotal')">+ Add New</button>
+    </div>
+
+    <!-- Transactions -->
+    <div class="box transactions" onclick="toggleExpand(this)">
+      <h2>TRANSACTIONS</h2>
+      <p id="transactionsTotal">Total transactions: RM0</p>
+      <div class="details">
+        <p id="transDetail1">Shopee : RM50 
+          <button class="edit-btn" onclick="event.stopPropagation(); editValue('transDetail1','transactionsTotal')">Edit</button>
+          <button class="delete-btn" onclick="event.stopPropagation(); deleteLine('transDetail1','transactionsTotal')">Delete</button>
+        </p>
+        <p id="transDetail2">GrabFood : RM50 
+          <button class="edit-btn" onclick="event.stopPropagation(); editValue('transDetail2','transactionsTotal')">Edit</button>
+          <button class="delete-btn" onclick="event.stopPropagation(); deleteLine('transDetail2','transactionsTotal')">Delete</button>
+        </p>
+      </div>
+      <button class="add-btn" onclick="event.stopPropagation(); addNewLine(this,'transactionsTotal')">+ Add New</button>
+    </div>
+  </div>
+
+  <script>
+    function toggleExpand(box) {
+      box.classList.toggle("expanded");
+    }
+
+    function editValue(id, totalId) {
+      let element = document.getElementById(id);
+      let parts = element.innerText.split(":");
+      let label = parts[0]?.trim() || "New Item";
+      let currentAmount = parts[1] ? parts[1].replace("RM","").trim() : "0";
+
+      element.innerHTML = "";
+
+      let nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.value = label;
+
+      let amountLabel = document.createTextNode(" : RM");
+
+      let amountInput = document.createElement("input");
+      amountInput.type = "number";
+      amountInput.value = currentAmount;
+
+      element.appendChild(nameInput);
+      element.appendChild(amountLabel);
+      element.appendChild(amountInput);
+
+      nameInput.focus();
+
+      function save() {
+        let newLabel = nameInput.value.trim() || "Unnamed";
+        let newAmount = parseFloat(amountInput.value) || 0;
+        element.innerHTML = `${newLabel} : RM${newAmount}
+          <button class="edit-btn" onclick="event.stopPropagation(); editValue('${id}','${totalId}')">Edit</button>
+          <button class="delete-btn" onclick="event.stopPropagation(); deleteLine('${id}','${totalId}')">Delete</button>`;
+        recalcTotal(totalId);
+      }
+
+      nameInput.addEventListener("keydown", e => { if (e.key === "Enter") save(); });
+      amountInput.addEventListener("keydown", e => { if (e.key === "Enter") save(); });
+    }
+
+    function deleteLine(id, totalId) {
+      let element = document.getElementById(id);
+      if (element) {
+        element.remove();
+        recalcTotal(totalId);
+      }
+    }
+
+    function addNewLine(btn, totalId) {
+      let detailsDiv = btn.previousElementSibling; 
+      let newId = totalId + "_detail" + Date.now();
+      let p = document.createElement("p");
+      p.id = newId;
+      p.innerHTML = `New Item : RM0 
+        <button class="edit-btn" onclick="event.stopPropagation(); editValue('${newId}','${totalId}')">Edit</button>
+        <button class="delete-btn" onclick="event.stopPropagation(); deleteLine('${newId}','${totalId}')">Delete</button>`;
+      detailsDiv.appendChild(p);
+      recalcTotal(totalId);
+      editValue(newId, totalId); // auto-edit name + amount
+    }
+
+    function recalcTotal(totalId) {
+      let total = 0;
+      let detailsDiv = document.getElementById(totalId).nextElementSibling;
+      let rows = detailsDiv.querySelectorAll("p");
+      rows.forEach(p => {
+        let match = p.innerText.match(/RM(\d+)/);
+        if (match) total += parseFloat(match[1]);
+      });
+      if (totalId === "savingsTotal") {
+        document.getElementById(totalId).innerText = "Total savings: RM" + total;
+      } else if (totalId === "investmentsTotal") {
+        document.getElementById(totalId).innerText = "Total investments: RM" + total;
+      } else if (totalId === "transactionsTotal") {
+        document.getElementById(totalId).innerText = "Total transactions: RM" + total;
+      }
+    }
+
+    // Init totals
+    recalcTotal("savingsTotal");
+    recalcTotal("investmentsTotal");
+    recalcTotal("transactionsTotal");
+  </script>
+</body>
+</html>
