@@ -55,7 +55,7 @@
     }
 
     .box p {
-      font-size: 1.2em;
+      font-size: 1.3em;
       margin-bottom: 10px;
     }
 
@@ -63,11 +63,10 @@
       background: #333;
       color: white;
       border: none;
-      padding: 4px 8px;
+      padding: 5px 10px;
       border-radius: 5px;
       cursor: pointer;
-      margin-left: 8px;
-      font-size: 0.9em;
+      margin-left: 10px;
     }
 
     .edit-btn:hover, .delete-btn:hover, .add-btn:hover {
@@ -75,8 +74,9 @@
     }
 
     input {
-      font-size: 1em;
-      margin: 0 3px;
+      font-size: 1.2em;
+      text-align: center;
+      margin-bottom: 10px;
     }
 
     .details {
@@ -92,17 +92,12 @@
     }
 
     .box.expanded .details {
-      max-height: 600px;
+      max-height: 500px;
       opacity: 1;
     }
 
     .add-btn {
-      display: none;
       margin-top: 10px;
-    }
-
-    .box.expanded .add-btn {
-      display: inline-block;
     }
 
     @media (max-width: 768px) {
@@ -123,138 +118,123 @@
     <div class="box savings" onclick="toggleExpand(this)">
       <h2>SAVINGS</h2>
       <p id="savingsTotal">Total savings: RM0</p>
-      <div class="details">
-        <p id="savingsDetail1">CIMB : RM500 
-          <button class="edit-btn" onclick="event.stopPropagation(); editValue('savingsDetail1','savingsTotal')">Edit</button>
-          <button class="delete-btn" onclick="event.stopPropagation(); deleteLine('savingsDetail1','savingsTotal')">Delete</button>
-        </p>
-        <p id="savingsDetail2">Maybank : RM500 
-          <button class="edit-btn" onclick="event.stopPropagation(); editValue('savingsDetail2','savingsTotal')">Edit</button>
-          <button class="delete-btn" onclick="event.stopPropagation(); deleteLine('savingsDetail2','savingsTotal')">Delete</button>
-        </p>
-      </div>
-      <button class="add-btn" onclick="event.stopPropagation(); addNewLine(this,'savingsTotal')">+ Add New</button>
+      <div class="details" id="savingsDetails"></div>
+      <button class="add-btn" style="display:none;" onclick="event.stopPropagation(); addNew('savings')">+ Add</button>
     </div>
 
     <!-- Investments -->
     <div class="box investments" onclick="toggleExpand(this)">
       <h2>INVESTMENTS</h2>
       <p id="investmentsTotal">Total investments: RM0</p>
-      <div class="details">
-        <p id="investDetail1">Stocks : RM600 
-          <button class="edit-btn" onclick="event.stopPropagation(); editValue('investDetail1','investmentsTotal')">Edit</button>
-          <button class="delete-btn" onclick="event.stopPropagation(); deleteLine('investDetail1','investmentsTotal')">Delete</button>
-        </p>
-        <p id="investDetail2">Crypto : RM400 
-          <button class="edit-btn" onclick="event.stopPropagation(); editValue('investDetail2','investmentsTotal')">Edit</button>
-          <button class="delete-btn" onclick="event.stopPropagation(); deleteLine('investDetail2','investmentsTotal')">Delete</button>
-        </p>
-      </div>
-      <button class="add-btn" onclick="event.stopPropagation(); addNewLine(this,'investmentsTotal')">+ Add New</button>
+      <div class="details" id="investmentsDetails"></div>
+      <button class="add-btn" style="display:none;" onclick="event.stopPropagation(); addNew('investments')">+ Add</button>
     </div>
 
     <!-- Transactions -->
     <div class="box transactions" onclick="toggleExpand(this)">
       <h2>TRANSACTIONS</h2>
       <p id="transactionsTotal">Total transactions: RM0</p>
-      <div class="details">
-        <p id="transDetail1">Shopee : RM50 
-          <button class="edit-btn" onclick="event.stopPropagation(); editValue('transDetail1','transactionsTotal')">Edit</button>
-          <button class="delete-btn" onclick="event.stopPropagation(); deleteLine('transDetail1','transactionsTotal')">Delete</button>
-        </p>
-        <p id="transDetail2">GrabFood : RM50 
-          <button class="edit-btn" onclick="event.stopPropagation(); editValue('transDetail2','transactionsTotal')">Edit</button>
-          <button class="delete-btn" onclick="event.stopPropagation(); deleteLine('transDetail2','transactionsTotal')">Delete</button>
-        </p>
-      </div>
-      <button class="add-btn" onclick="event.stopPropagation(); addNewLine(this,'transactionsTotal')">+ Add New</button>
+      <div class="details" id="transactionsDetails"></div>
+      <button class="add-btn" style="display:none;" onclick="event.stopPropagation(); addNew('transactions')">+ Add</button>
     </div>
   </div>
 
   <script>
+    let data = { savings: [], investments: [], transactions: [] };
+
+    // Load data from server
+    async function loadData() {
+      try {
+        const res = await fetch('/data');
+        data = await res.json();
+      } catch (e) {
+        console.log("No server found, using empty data.");
+      }
+      renderAll();
+    }
+
+    // Save data to server
+    async function saveData() {
+      try {
+        await fetch('/data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+      } catch (e) {
+        console.log("Save failed (probably no backend).");
+      }
+    }
+
+    // Expand/collapse box
     function toggleExpand(box) {
       box.classList.toggle("expanded");
+      const addBtn = box.querySelector(".add-btn");
+      addBtn.style.display = box.classList.contains("expanded") ? "inline-block" : "none";
     }
 
-    function editValue(id, totalId) {
-      let element = document.getElementById(id);
-      let parts = element.innerText.split(":");
-      let label = parts[0]?.trim() || "New Item";
-      let currentAmount = parts[1] ? parts[1].replace("RM","").trim() : "0";
-
-      element.innerHTML = "";
-
-      let nameInput = document.createElement("input");
-      nameInput.type = "text";
-      nameInput.value = label;
-
-      let amountLabel = document.createTextNode(" : RM");
-
-      let amountInput = document.createElement("input");
-      amountInput.type = "number";
-      amountInput.value = currentAmount;
-
-      element.appendChild(nameInput);
-      element.appendChild(amountLabel);
-      element.appendChild(amountInput);
-
-      nameInput.focus();
-
-      function save() {
-        let newLabel = nameInput.value.trim() || "Unnamed";
-        let newAmount = parseFloat(amountInput.value) || 0;
-        element.innerHTML = `${newLabel} : RM${newAmount}
-          <button class="edit-btn" onclick="event.stopPropagation(); editValue('${id}','${totalId}')">Edit</button>
-          <button class="delete-btn" onclick="event.stopPropagation(); deleteLine('${id}','${totalId}')">Delete</button>`;
-        recalcTotal(totalId);
-      }
-
-      nameInput.addEventListener("keydown", e => { if (e.key === "Enter") save(); });
-      amountInput.addEventListener("keydown", e => { if (e.key === "Enter") save(); });
+    // Render everything
+    function renderAll() {
+      renderCategory('savings');
+      renderCategory('investments');
+      renderCategory('transactions');
     }
 
-    function deleteLine(id, totalId) {
-      let element = document.getElementById(id);
-      if (element) {
-        element.remove();
-        recalcTotal(totalId);
-      }
-    }
-
-    function addNewLine(btn, totalId) {
-      let detailsDiv = btn.previousElementSibling; 
-      let newId = totalId + "_detail" + Date.now();
-      let p = document.createElement("p");
-      p.id = newId;
-      p.innerHTML = `New Item : RM0 
-        <button class="edit-btn" onclick="event.stopPropagation(); editValue('${newId}','${totalId}')">Edit</button>
-        <button class="delete-btn" onclick="event.stopPropagation(); deleteLine('${newId}','${totalId}')">Delete</button>`;
-      detailsDiv.appendChild(p);
-      recalcTotal(totalId);
-      editValue(newId, totalId); // auto-edit name + amount
-    }
-
-    function recalcTotal(totalId) {
+    function renderCategory(category) {
+      const container = document.getElementById(category + "Details");
+      container.innerHTML = "";
       let total = 0;
-      let detailsDiv = document.getElementById(totalId).nextElementSibling;
-      let rows = detailsDiv.querySelectorAll("p");
-      rows.forEach(p => {
-        let match = p.innerText.match(/RM(\d+)/);
-        if (match) total += parseFloat(match[1]);
+
+      data[category].forEach((item, i) => {
+        total += item.amount;
+        const p = document.createElement("p");
+        p.innerHTML = `
+          <span contenteditable="true" 
+                onclick="event.stopPropagation();" 
+                onfocus="event.stopPropagation();" 
+                onblur="updateName('${category}', ${i}, this.innerText)">
+                ${item.name}
+          </span> : RM
+          <span contenteditable="true" 
+                onclick="event.stopPropagation();" 
+                onfocus="event.stopPropagation();" 
+                onblur="updateAmount('${category}', ${i}, this.innerText)">
+                ${item.amount}
+          </span>
+          <button class="delete-btn" onclick="event.stopPropagation(); deleteItem('${category}', ${i})">Delete</button>
+        `;
+        container.appendChild(p);
       });
-      if (totalId === "savingsTotal") {
-        document.getElementById(totalId).innerText = "Total savings: RM" + total;
-      } else if (totalId === "investmentsTotal") {
-        document.getElementById(totalId).innerText = "Total investments: RM" + total;
-      } else if (totalId === "transactionsTotal") {
-        document.getElementById(totalId).innerText = "Total transactions: RM" + total;
-      }
+
+      document.getElementById(category + "Total").innerText =
+        "Total " + category + ": RM" + total;
     }
 
-    // Init totals
-    recalcTotal("savingsTotal");
-    recalcTotal("investmentsTotal");
-    recalcTotal("transactionsTotal");
+    function addNew(category) {
+      data[category].push({ name: "New Item", amount: 0 });
+      saveData();
+      renderCategory(category);
+    }
+
+    function deleteItem(category, index) {
+      data[category].splice(index, 1);
+      saveData();
+      renderCategory(category);
+    }
+
+    function updateName(category, index, newName) {
+      data[category][index].name = newName;
+      saveData();
+    }
+
+    function updateAmount(category, index, newAmount) {
+      data[category][index].amount = parseFloat(newAmount) || 0;
+      saveData();
+      renderCategory(category);
+    }
+
+    // Initialize
+    loadData();
   </script>
 </body>
 </html>
